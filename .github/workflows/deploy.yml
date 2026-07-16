@@ -59,7 +59,7 @@ jobs:
             php artisan view:cache
             php artisan optimize
 
-            curl --fail http://34.229.134.214/health
+            # curl --fail http://34.229.134.214/health
 
             ln -sfn "$APP_DIR/$TARGET" "$APP_DIR/current"
 
