@@ -1,73 +1,69 @@
 name: Laravel Blue-Green Deployment
-on: 
+
+on:
   push:
-    branches: 
+    branches:
       - main
 
 jobs:
-  deploy: 
-    runs-on: ubuntu-latest 
-  
-    steps: 
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4 
-      
-      - name: Deploy to EC2 
-        uses: appleboy/ssh-action@v1.2.0 
-        
-        with: 
-          host: 34.229.134.214 
-          username: ubuntu 
-          key: ${{ secrets.EC2_SSH_KEY }} 
-          
-          script: | 
-            set -e 
-            APP_DIR=/var/www/laravel-project 
-            
-            CURRENT=$(readlink $APP_DIR/current) 
-            
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 34.229.134.214
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+
+          script: |
+            set -e
+
+            APP_DIR="/var/www/laravel-project"
+
+            CURRENT=$(readlink -f "$APP_DIR/current")
+
             if [ "$CURRENT" = "$APP_DIR/blue" ]; then
-              TARGET=green
-              SOURCE=blue 
-            else T
-              ARGET=blue 
-              SOURCE=green 
-            fi 
-            
+              TARGET="green"
+            else
+              TARGET="blue"
+            fi
+
+            echo "Current : $CURRENT"
             echo "Deploy Target : $TARGET"
-            
-            rm -rf $APP_DIR/$TARGET 
-            
-            git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git $APP_DIR/$TARGET 
-            
-            cd $APP_DIR/$TARGET
-            
+
+            rm -rf "$APP_DIR/$TARGET"
+
+            git clone https://github.com/Ismailcse98/blue-green-zero-downtime-deployment.git "$APP_DIR/$TARGET"
+
+            cd "$APP_DIR/$TARGET"
+
             composer install --no-dev --prefer-dist --optimize-autoloader
-            
-            ln -sfn $APP_DIR/shared/.env .env
-            
+
+            ln -sfn "$APP_DIR/shared/.env" .env
+
             rm -rf storage
-            ln -sfn $APP_DIR/shared/storage storage
-            
-            rm -rf bootstrap/cache 
-            ln -sfn $APP_DIR/shared/bootstrap/cache bootstrap/cache
-            
-            php artisan migrate --force
-            
-            php artisan optimize 
-            
+            ln -sfn "$APP_DIR/shared/storage" storage
+
+            rm -rf bootstrap/cache
+            ln -sfn "$APP_DIR/shared/bootstrap/cache" bootstrap/cache
+
+            # php artisan migrate --force
+
             php artisan config:cache
-            
             php artisan route:cache
-            
             php artisan view:cache
-            
-            curl --fail http://127.0.0.1 || exit 1
-            
-            ln -sfn $APP_DIR/$TARGET $APP_DIR/current 
-            
+            php artisan optimize
+
+            curl --fail http://34.229.134.214/health
+
+            ln -sfn "$APP_DIR/$TARGET" "$APP_DIR/current"
+
             sudo systemctl reload php8.2-fpm
-            
             sudo systemctl reload nginx
-            
+
             echo "Deployment Successful"
