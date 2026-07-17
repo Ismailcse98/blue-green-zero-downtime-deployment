@@ -1,6 +1,8 @@
-## Zero Downtime Deployment with CI CD
+# Laravel 10 Production Deployment on AWS EC2 with Blue-Green Deployment & GitHub Actions
 
-zero downtime deployment project
+This repository provides a production-ready guide for deploying a Laravel 10 application on AWS EC2 using Blue-Green Deployment, Zero Downtime, and GitHub Actions CI/CD.
+
+It covers server setup, Nginx, PHP-FPM, MySQL, SSL, deployment automation, health checks, and rollback strategies following real-world deployment practices.
 
 ---
 
@@ -336,11 +338,24 @@ SHOW TABLES;
 
 Never expose MySQL publicly.
 
-```
+```text
 3306 → Private Network Only
 ```
 
 # Create Deployment Directory
+
+```text
+/var/www/laravel-project
+│
+├── blue/
+├── green/
+├── shared/
+│   ├── storage/
+│   ├── bootstrap/cache/
+│   └── .env
+│
+└── current -> blue
+```
 
 ```bash
 1. sudo mkdir -p /var/www/laravel-project
@@ -380,7 +395,7 @@ Never expose MySQL publicly.
 3. cd /var/www/laravel-project
 4. git clone https://github.com/username/project.git blue
 5. cd blue
-6. composer install --no-dev --optimize-autoloader
+6. composer install --no-dev --prefer-dist --optimize-autoloader
 7. php artisan key:generate
 8. php artisan migrate --force
 9. php artisan optimize
@@ -405,7 +420,7 @@ Never expose MySQL publicly.
 3. cd /var/www/laravel-project
 4. git clone https://github.com/username/project.git green
 5. cd green
-6. composer install --no-dev --optimize-autoloader
+6. composer install --no-dev --prefer-dist --optimize-autoloader
 7. php artisan key:generate
 8. php artisan migrate --force
 9. php artisan optimize
@@ -421,7 +436,9 @@ Never expose MySQL publicly.
 19. Check current live project: readlink current
 
 ```
+
 # Setup conf file
+
 ## Step 1: Create & Open custom laravel.conf file
 
 ```bash
@@ -458,12 +475,12 @@ server {
 
 ## Step 3: Enable & Test the Configuration
 
-
 ```bash
 sudo ln -s /etc/nginx/sites-available/laravel /etc/nginx/sites-enabled/
 ```
 
 Remove default conf file
+
 ```bash
 sudo rm /etc/nginx/sites-enabled/default
 ```
@@ -486,3 +503,115 @@ test is successful
 ```bash
 sudo systemctl restart nginx
 ```
+
+# GitHub Actions CI/CD (Blue-Green Deployment)
+
+## Step 1: Structure
+
+```text
+.github/
+    └── workflows/
+        └── deploy.yml
+```
+
+## Step 2: GitHub Secrets
+
+1. EC2_HOST=43.xxx.xxx.xxx
+2. EC2_USERNAME=ubuntu
+3. EC2_SSH_KEY=<Private SSH Key>
+
+## Step 3: GitHub Actions Workflow
+
+```bash
+**Create**
+.github/workflows/deploy.yml
+```
+
+```bash
+name: Laravel Blue-Green Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 43.xxx.xxx.xxx
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+
+          script: |
+            set -e
+
+            APP_DIR="/var/www/laravel-project"
+
+            CURRENT=$(readlink -f "$APP_DIR/current")
+
+            if [ "$CURRENT" = "$APP_DIR/blue" ]; then
+              TARGET="green"
+            else
+              TARGET="blue"
+            fi
+
+            echo "Current : $CURRENT"
+            echo "Deploy Target : $TARGET"
+
+            rm -rf "$APP_DIR/$TARGET"
+
+            git clone https://github.com/Ismailcse98/blue-green-zero-downtime-deployment.git "$APP_DIR/$TARGET"
+
+            cd "$APP_DIR/$TARGET"
+
+            composer install --no-dev --prefer-dist --optimize-autoloader
+
+            ln -sfn "$APP_DIR/shared/.env" .env
+
+            rm -rf storage
+            ln -sfn "$APP_DIR/shared/storage" storage
+
+            rm -rf bootstrap/cache
+            ln -sfn "$APP_DIR/shared/bootstrap/cache" bootstrap/cache
+
+            php artisan migrate --force
+
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan optimize
+
+            ln -sfn "$APP_DIR/$TARGET" "$APP_DIR/current"
+
+            sudo systemctl reload php8.2-fpm
+            sudo systemctl reload nginx
+
+            echo "Deployment Successful"
+```
+
+## Step 4: Deployment Commands
+
+```bash
+git add .
+git commit -m "Deploy"
+git push origin main
+```
+
+# Production Ready Script
+
+```bash
+git fetch
+git checkout
+git reset --hard origin/main
+```
+
+# Conclusion
+This repository demonstrates a complete production deployment workflow for Laravel applications using AWS EC2, Blue-Green Deployment, and GitHub Actions CI/CD. It is intended as a practical reference for building reliable, automated, and production-ready Laravel deployments.
