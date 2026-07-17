@@ -437,6 +437,18 @@ Never expose MySQL publicly.
 
 ```
 
+# Configure Database
+nano .env
+```text
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=db_name
+DB_USERNAME=db_user
+DB_PASSWORD=db_password
+
+```
+
 # Setup conf file
 
 ## Step 1: Create & Open custom laravel.conf file
@@ -614,4 +626,5 @@ git reset --hard origin/main
 ```
 
 # Conclusion
+
 This repository demonstrates a complete production deployment workflow for Laravel applications using AWS EC2, Blue-Green Deployment, and GitHub Actions CI/CD. It is intended as a practical reference for building reliable, automated, and production-ready Laravel deployments.
