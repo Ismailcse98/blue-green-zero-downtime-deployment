@@ -340,16 +340,37 @@ Never expose MySQL publicly.
 3306 → Private Network Only
 ```
 
-## Step 13: Check Version
+# Create Deployment Directory
 
 ```bash
-mysql --version
+1. sudo mkdir -p /var/www/laravel-project
+2. sudo mkdir -p /var/www/laravel-project{blue, green, shared}
+3. sudo mkdir -p /var/www/laravel-project/shared/storage
+4. sudo mkdir -p /var/www/laravel-project/shared/bootstrap/cache
 ```
 
+# Directory Permission
 
-
-
-
+```bash
+1. sudo chown -R ubuntu:www-data /var/www/laravel-project
+2. Directory Permission: sudo find /var/www/laravel-project -type d -exec chmod 775 {} \;
+3. File Permission: sudo find /var/www/laravel-project -type f -exec chmod 664 {} \;
+4. cd /var/www/laravel-project
+5. sudo chmod -R 775 storage
+6. sudo chmod -R 775 bootstrap/cache
+7. sudo chmod -R g+w storage
+8. sudo chmod -R g+w bootstrap/cache
+9. Add www-data Group in Ubuntu User: sudo usermod -aG www-data ubuntu
+10. exit and again login
+11. Check: groups
+12. You will get output: ubuntu -> www-data
+13. Add Setgid Bit:  sudo find /var/www/laravel-project -type d -exec chmod g+s {} \;
+14. sudo chown -R ubuntu:www-data /var/www/laravel-project/shared
+15. sudo chmod -R 775 /var/www/laravel-project/shared
+16. sudo chown -R ubuntu:www-data /var/www/laravel-project/blue
+17. sudo chown -R ubuntu:www-data /var/www/laravel-project/green
+18. Check: ls -la /var/www/laravel-project
+```
 
 ## Step 15: Create & Open custom laravel.conf file
 
