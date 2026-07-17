@@ -381,27 +381,54 @@ Never expose MySQL publicly.
 4. git clone https://github.com/username/project.git blue
 5. cd blue
 6. composer install --no-dev --optimize-autoloader
-7. cp .env.example /var/www/laravel-project/shared/.env
-8. ln -s /var/www/laravel-project/shared/.env .env
-9. cp -R storage/. /var/www/laravel-project/shared/storage/
-10. rm -rf storage
-11. ln -s /var/www/laravel-project/shared/storage storage
-12. cp -R bootstrap/cache/. /var/www/laravel-project/shared/bootstrap/cache/
-13. rm -rf bootstrap/cache
-14. ln -s /var/www/laravel-project/shared/bootstrap/cache bootstrap/cache
+7. php artisan key:generate
+8. php artisan migrate --force
+9. php artisan optimize
+10. cp .env.example /var/www/laravel-project/shared/.env
+11. ln -s /var/www/laravel-project/shared/.env .env
+12. cp -R storage/. /var/www/laravel-project/shared/storage/
+13. rm -rf storage
+14. ln -s /var/www/laravel-project/shared/storage storage
+15. cp -R bootstrap/cache/. /var/www/laravel-project/shared/bootstrap/cache/
+16. rm -rf bootstrap/cache
+17. ln -s /var/www/laravel-project/shared/bootstrap/cache bootstrap/cache
+18. Check Symlink: ls -la
+19. Check current live project: readlink current
 
 ```
 
 # Deploy New Version (Green)
 
+```bash
+1. cd ~
+2. ln -sfn /var/www/laravel-project/green /var/www/laravel-project/current
+3. cd /var/www/laravel-project
+4. git clone https://github.com/username/project.git green
+5. cd green
+6. composer install --no-dev --optimize-autoloader
+7. php artisan key:generate
+8. php artisan migrate --force
+9. php artisan optimize
+10. cp .env.example /var/www/laravel-project/shared/.env
+11. ln -s /var/www/laravel-project/shared/.env .env
+12. cp -R storage/. /var/www/laravel-project/shared/storage/
+13. rm -rf storage
+14. ln -s /var/www/laravel-project/shared/storage storage
+15. cp -R bootstrap/cache/. /var/www/laravel-project/shared/bootstrap/cache/
+16. rm -rf bootstrap/cache
+17. ln -s /var/www/laravel-project/shared/bootstrap/cache bootstrap/cache
+18. Check Symlink: ls -la
+19. Check current live project: readlink current
 
-## Step 15: Create & Open custom laravel.conf file
+```
+# Setup conf file
+## Step 1: Create & Open custom laravel.conf file
 
 ```bash
 sudo nano /etc/nginx/sites-available/laravel
 ```
 
-## Step 7: Enter this code in laravel.conf file
+## Step 2: Enter this code in laravel.conf file
 
 ```bash
 server {
@@ -429,7 +456,17 @@ server {
 }
 ```
 
-## Step 16: Test the Configuration
+## Step 3: Enable & Test the Configuration
+
+
+```bash
+sudo ln -s /etc/nginx/sites-available/laravel /etc/nginx/sites-enabled/
+```
+
+Remove default conf file
+```bash
+sudo rm /etc/nginx/sites-enabled/default
+```
 
 Before restarting Nginx, verify the configuration.
 
@@ -444,4 +481,8 @@ syntax is ok
 test is successful
 ```
 
-## Step 8: Reload Nginx
+## Step 4: Reload Nginx
+
+```bash
+sudo systemctl restart nginx
+```
