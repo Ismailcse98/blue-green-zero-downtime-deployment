@@ -3,6 +3,7 @@
 zero downtime deployment project
 
 ---
+
 # Setup Ubuntu in EC2 Intance
 
 ## Step 1: Open the EC2 Dashboard
@@ -50,8 +51,7 @@ http://<PUBLIC_IP>
 
 ## You should see the **Welcome to Nginx!** page.
 
-
-# Install PHP 8.2 with Required Extensions 
+# Install PHP 8.2 with Required Extensions
 
 ## Step 1: Update the System
 
@@ -371,6 +371,29 @@ Never expose MySQL publicly.
 17. sudo chown -R ubuntu:www-data /var/www/laravel-project/green
 18. Check: ls -la /var/www/laravel-project
 ```
+
+# First Deployment (Blue)
+
+```bash
+1. cd ~
+2. ln -sfn /var/www/laravel-project/blue /var/www/laravel-project/current
+3. cd /var/www/laravel-project
+4. git clone https://github.com/username/project.git blue
+5. cd blue
+6. composer install --no-dev --optimize-autoloader
+7. cp .env.example /var/www/laravel-project/shared/.env
+8. ln -s /var/www/laravel-project/shared/.env .env
+9. cp -R storage/. /var/www/laravel-project/shared/storage/
+10. rm -rf storage
+11. ln -s /var/www/laravel-project/shared/storage storage
+12. cp -R bootstrap/cache/. /var/www/laravel-project/shared/bootstrap/cache/
+13. rm -rf bootstrap/cache
+14. ln -s /var/www/laravel-project/shared/bootstrap/cache bootstrap/cache
+
+```
+
+# Deploy New Version (Green)
+
 
 ## Step 15: Create & Open custom laravel.conf file
 
